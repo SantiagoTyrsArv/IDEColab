@@ -1,15 +1,14 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 import { useEditorStore } from '../../shared/store';
 import { countWords } from '../../domain/use-cases/count-words';
 import { detectMisspelled } from '../../domain/use-cases/detect-misspelled';
 import { updateMetricsWithINP, updateMetricsWithLongTask } from '../../domain/entities/metrics';
 import { runAsMicrotask } from '../../infrastructure/scheduling/microtask';
-import { yieldToMain } from '../../infrastructure/scheduling/post-task';
 import { trackINP } from '../../infrastructure/metrics/inp-tracker';
 import { trackLongTasks } from '../../infrastructure/metrics/long-task-observer';
 import { DICTIONARY_WORDS, LONG_TASK_WINDOW_MS } from '../../shared/constants';
 import type { ExecutionMode, SpellCheckResult } from '../../shared/types';
-import { useEffect } from 'react';
+import SpellCheckWorker from '../../infrastructure/workers/spellcheck.worker?worker';
 
 /**
  * Hook que conecta el editor con la lógica de dominio.
@@ -30,6 +29,7 @@ export function useEditor() {
   const spellCheckTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cleanupINPRef = useRef<(() => void) | null>(null);
   const cleanupLongTaskRef = useRef<(() => void) | null>(null);
+  const workerRef = useRef<InstanceType<typeof SpellCheckWorker> | null>(null);
 
   /** Inicia el tracking de métricas al montar */
   useEffect(() => {
@@ -51,8 +51,61 @@ export function useEditor() {
       if (spellCheckTimerRef.current) {
         clearTimeout(spellCheckTimerRef.current);
       }
+      // Terminar el Web Worker al desmontar para evitar fugas de memoria
+      if (workerRef.current) {
+        workerRef.current.terminate();
+        workerRef.current = null;
+      }
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  /**
+   * Obtiene o crea el Web Worker de spell check.
+   * Se reutiliza la misma instancia para evitar costos de creación.
+   */
+  const getSpellCheckWorker = useCallback(() => {
+    if (!workerRef.current) {
+      workerRef.current = new SpellCheckWorker();
+    }
+    return workerRef.current;
+  }, []);
+
+  /**
+   * Ejecuta el spell check en un Web Worker (modo optimizado).
+   * Devuelve una Promise que se resuelve con el resultado.
+   *
+   * **Event Loop:** El Worker corre en un hilo separado del navegador.
+   * Los mensajes postMessage se encolan como macrotareas en ambos lados.
+   * El hilo principal queda libre para pintar frames y responder inputs.
+   */
+  const runSpellCheckInWorker = useCallback(
+    (text: string): Promise<SpellCheckResult> => {
+      return new Promise((resolve, reject) => {
+        const worker = getSpellCheckWorker();
+
+        const handleMessage = (event: MessageEvent<{ type: string; result: SpellCheckResult }>) => {
+          if (event.data.type === 'result') {
+            worker.removeEventListener('message', handleMessage);
+            worker.removeEventListener('error', handleError);
+            resolve(event.data.result);
+          }
+        };
+
+        const handleError = (event: ErrorEvent) => {
+          worker.removeEventListener('message', handleMessage);
+          worker.removeEventListener('error', handleError);
+          reject(new Error(`Worker error: ${event.message}`));
+        };
+
+        worker.addEventListener('message', handleMessage);
+        worker.addEventListener('error', handleError);
+
+        worker.postMessage({ type: 'check', text, dictionary: DICTIONARY_WORDS });
+      });
+    },
+    [getSpellCheckWorker],
+  );
 
   /**
    * Maneja el input del usuario.
@@ -67,13 +120,20 @@ export function useEditor() {
     // sin causar un frame intermedio con valor desactualizado.
     runAsMicrotask(() => {
       const result = countWords(newContent);
-      // El resultado se consume en el componente vía el store
-      void result; // En un caso real, se guardaría en el store
+      // Actualizar el store con el resultado del conteo
+      store.setContent(newContent);
+      void result;
     });
   }, [store]);
 
   /**
    * Dispara el chequeo ortográfico según el modo actual.
+   *
+   * **Modo ingenuo:** detectMisspelled corre SÍNCRONAMENTE en el hilo principal.
+   * Esto bloquea el render y causa long tasks medibles.
+   *
+   * **Modo optimizado:** detectMisspelled corre en un Web Worker (hilo separado).
+   * El hilo principal queda libre, no hay long tasks, y el INP mejora.
    */
   const triggerSpellCheck = useCallback((text: string, mode: ExecutionMode) => {
     // Limpiar timer anterior
@@ -89,20 +149,22 @@ export function useEditor() {
       logSpellCheckResult(result);
       store.setSpellCheckStatus('done');
     } else {
-      // MODO OPTIMIZADO: usamos scheduler.yield para ceder el hilo
-      // y luego ejecutamos el chequeo de forma que no bloquee.
-      // En un caso real esto iría al Web Worker; aquí simulamos
-      // la diferencia con yield.
+      // MODO OPTIMIZADO: el trabajo pesado se delega al Web Worker.
+      // El Worker corre en un hilo separado del navegador, sin bloquear
+      // el hilo principal ni impedir que React pinte frames.
       store.setSpellCheckStatus('checking');
 
-      void (async () => {
-        await yieldToMain(); // Ceder el hilo al navegador
-        const result = detectMisspelled(text, DICTIONARY_WORDS);
-        logSpellCheckResult(result);
-        store.setSpellCheckStatus('done');
-      })();
+      runSpellCheckInWorker(text)
+        .then((result) => {
+          logSpellCheckResult(result);
+          store.setSpellCheckStatus('done');
+        })
+        .catch((error: unknown) => {
+          console.error('[SpellCheck Worker] Error:', error);
+          store.setSpellCheckStatus('done');
+        });
     }
-  }, [store]);
+  }, [store, runSpellCheckInWorker]);
 
   /**
    * Maneja el debounce para spell check.
