@@ -1,0 +1,17 @@
+{
+  "name": "taller01-monorepo",
+  "private": true,
+  "scripts": {
+    "dev:frontend": "pnpm --filter frontend dev",
+    "dev:backend": "pnpm --filter backend dev",
+    "dev": "concurrently \"pnpm dev:frontend\" \"pnpm dev:backend\"",
+    "build": "pnpm --filter frontend build && pnpm --filter backend build",
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck",
+    "clean": "pnpm -r exec rm -rf node_modules dist"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
