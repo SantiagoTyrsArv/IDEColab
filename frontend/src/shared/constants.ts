@@ -10,11 +10,16 @@ export const LONG_TASK_WINDOW_MS = 10_000;
 /** ID del documento por defecto (simula un doc persistido) */
 export const DEFAULT_DOCUMENT_ID = 'doc-001';
 
-/** URL base del backend */
-export const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
-
-/** WebSocket URL del backend */
-export const WS_URL = import.meta.env.VITE_WS_URL ?? 'ws://localhost:3001';
+/**
+ * URL base del backend.
+ *
+ * En producción (servicio único): '' — relativo al mismo origen.
+ * fetch('/api/documents') → https://mi-app.onrender.com/api/documents
+ *
+ * En desarrollo con backend separado: configurar VITE_API_URL=http://localhost:3001
+ * fetch('http://localhost:3001/api/documents')
+ */
+export const API_BASE_URL = import.meta.env.VITE_API_URL ?? '';
 
 /** Simulated dictionary para spellcheck (palabras comunes en español) */
 export const DICTIONARY_WORDS = [

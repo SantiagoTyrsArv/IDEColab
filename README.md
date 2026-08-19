@@ -143,7 +143,7 @@ Un INP < 200ms es "bueno"; > 500ms es "malo".
 - **Backend:** Express (Node.js, in-memory)
 - **Testing:** Vitest + React Testing Library
 - **Linting:** ESLint + TypeScript-ESLint + Prettier
-- **Despliegue:** Google Cloud Run
+- **Despliegue:** Render (Docker)
 
 ## Cómo Correr Localmente
 
@@ -232,6 +232,19 @@ taller01/
 
 3. **Compara los gráficos** del historial de INP para ver la diferencia visual
 
-## Despliegue en GCP
+## Despliegue
 
-Ver [DEPLOYMENT.md](./DEPLOYMENT.md) para instrucciones detalladas de despliegue en Google Cloud Run.
+Ver [DEPLOYMENT.md](./DEPLOYMENT.md) para instrucciones detalladas.
+
+### Render (recomendado)
+
+El proyecto se despliega como un **servicio Docker único** en Render. El backend Express sirve la API y los archivos estáticos del frontend.
+
+```bash
+# Probar el build de producción localmente
+docker build -t editor-colaborativo .
+docker run -p 8080:8080 -e NODE_ENV=production editor-colaborativo
+# Abrir http://localhost:8080
+```
+
+En Render: conectar el repositorio → detecta `render.yaml` automáticamente → deploy.

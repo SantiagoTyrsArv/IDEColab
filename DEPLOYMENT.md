@@ -1,105 +1,139 @@
-# Guía de Despliegue — Google Cloud Platform
+# Guía de Despliegue — Render
 
-## Prerrequisitos
+## Arquitectura de Despliegue
 
-1. **GCP Project** creado con billing habilitado
-2. **gcloud CLI** instalado y autenticado (`gcloud auth login`)
-3. **Docker** instalado localmente (para pruebas)
-4. APIs habilitadas:
-   ```bash
-   gcloud services enable run.googleapis.com
-   gcloud services enable artifactregistry.googleapis.com
-   gcloud services enable cloudbuild.googleapis.com
-   ```
+El proyecto se despliega como **un solo servicio Docker** en Render. El backend Express sirve tanto la API como los archivos estáticos del frontend (build de React/Vite). No hay servicios separados.
 
-## 1. Crear Repository en Artifact Registry
-
-```bash
-# Crear el repository (una sola vez)
-gcloud artifacts repositories create taller01-artifacts \
-  --repository-format=docker \
-  --location=us-central1 \
-  --description="Docker images for Taller 01"
-
-# Autenticar Docker con Artifact Registry
-gcloud auth configure-docker us-central1-docker.pkg.dev
+```
+Render Web Service
+├── Express (API + estáticos)
+│   ├── /api/*          → Rutas de API (documents, sync, health)
+│   ├── /*.js, *.css    → Archivos estáticos del frontend
+│   └── /* (catch-all)  → index.html (SPA routing de React)
 ```
 
-## 2. Despliegue Manual (desde la máquina local)
+## Despliegue Automático (Recomendado)
 
-### Frontend
-```bash
-cd frontend
-docker build -t taller01-frontend .
-docker run -p 5173:80 taller01-frontend
-# Abrir http://localhost:5173
-```
+### 1. Conectar el repositorio
 
-### Backend
-```bash
-cd backend
-docker build -t taller01-backend .
-docker run -p 3001:3001 taller01-backend
-# Backend disponible en http://localhost:3001
-```
+1. Crear cuenta en [render.com](https://render.com)
+2. New → Web Service → Connect a GitHub repository
+3. Seleccionar el repositorio `taller01`
 
-## 3. Despliegue con Cloud Build (CI/CD)
+### 2. Configurar el servicio
 
-### Configurar variables en Cloud Build
-```bash
-# Usar el cloudbuild.yaml de la raíz del proyecto
-gcloud builds submit \
-  --config=cloudbuild.yaml \
-  --substitutions=_AR_REGION=us-central1,_DEPLOY_REGION=us-central1 .
-```
+Render detectará el `render.yaml` automáticamente. Si no lo hace, configurar manualmente:
 
-### Configurar trigger automático desde GitHub
-```bash
-# Conectar repositorio GitHub a Cloud Build
-gcloud builds connections create github github-connection \
-  --project=$(gcloud config get-value project)
+| Campo | Valor |
+|---|---|
+| **Name** | `editor-colaborativo` |
+| **Runtime** | Docker |
+| **Dockerfile** | `./Dockerfile` |
+| **Docker Context** | `.` |
+| **Port** | `8080` |
 
-# Crear trigger para la rama main
-gcloud builds triggers create github \
-  --repo-name=taller01 \
-  --repo-owner=YOUR_GITHUB_USERNAME \
-  --branch-pattern=^main$ \
-  --build-config=cloudbuild.yaml \
-  --name=deploy-main
-```
+### 3. Variables de entorno
 
-## 4. Variables de Entorno
+| Variable | Valor |
+|---|---|
+| `NODE_ENV` | `production` |
 
-El backend puede configurarse con estas variables:
+> **Nota:** `PORT` no necesita configurarse — Render lo inyecta automáticamente.
 
-| Variable | Descripción | Default |
-|---|---|---|
-| `PORT` | Puerto del servidor | `3001` |
+### 4. Health Check
 
-## 5. Verificar el Despliegue
+Configurar el health check path a `/api/health`. Render verificará que el servicio esté saludable antes de dirigir tráfico.
+
+### 5. Deploy
+
+Render construye y despliega automáticamente al hacer push a la rama `main`.
+
+## Despliegue Manual (Docker local)
+
+### Probar el build de producción localmente
 
 ```bash
-# Ver servicios desplegados
-gcloud run services list --platform=managed --region=us-central1
+# Construir la imagen
+docker build -t editor-colaborativo .
 
-# Ver logs del frontend
-gcloud run services logs read frontend --platform=managed --region=us-central1 --limit=20
+# Ejecutar (Render inyecta PORT; localmente lo mapeamos)
+docker run -p 8080:8080 -e NODE_ENV=production editor-colaborativo
 
-# Ver logs del backend
-gcloud run services logs read backend --platform=managed --region=us-central1 --limit=20
-
-# Obtener URL del frontend
-gcloud run services describe frontend --platform=managed --region=us-central1 --format='value(status.url)'
-
-# Obtener URL del backend
-gcloud run services describe backend --platform=managed --region=us-central1 --format='value(status.url)'
+# Abrir http://localhost:8080
 ```
 
-## 6. Configuración de Autoscaling
+### Verificar que funciona
 
-Cloud Run está configurado con:
-- **min-instances: 0** — El backend se apaga cuando no hay tráfico (ahorro de costo)
-- **max-instances: 3** — Límite máximo de instancias concurrentes
-- **Concurrencia:** 80 requests por instancia (default de Cloud Run)
+```bash
+# Health check
+curl http://localhost:8080/api/health
+# → {"status":"ok","timestamp":"..."}
 
-> **Nota:** Con min-instances=0, el primer request después de un periodo de inactividad puede tardar 1-3 segundos (cold start).
+# API
+curl http://localhost:8080/api/documents/doc-001
+# → {"id":"doc-001","content":"...",...}
+
+# Frontend (debe devolver index.html)
+curl http://localhost:8080
+# → <!doctype html>...
+
+# SPA routing (cualquier ruta devuelve index.html)
+curl http://localhost:8080/cualquier-ruta
+# → <!doctype html>...
+```
+
+## Desarrollo Local (sin Docker)
+
+El desarrollo local sigue usando frontend y backend por separado con hot reload:
+
+```bash
+# Instalar dependencias
+pnpm install
+
+# Ejecutar ambos en paralelo
+pnpm dev
+# Frontend: http://localhost:5173 (Vite dev server)
+# Backend:  http://localhost:3001 (tsx watch)
+
+# O por separado:
+pnpm dev:frontend
+pnpm dev:backend
+```
+
+En desarrollo, el frontend (`localhost:5173`) llama al backend (`localhost:3001`) via CORS. La variable `VITE_API_URL` no necesita configurarse porque el default en `constants.ts` es `''` (relativo), pero en desarrollo con servicios separados, configurar:
+
+```bash
+# En frontend/.env.local
+VITE_API_URL=http://localhost:3001
+```
+
+## Variables de Entorno
+
+| Variable | Entorno | Descripción | Default |
+|---|---|---|---|
+| `PORT` | Runtime | Puerto del servidor (Render lo inyecta) | `8080` |
+| `NODE_ENV` | Build/Run | Modo de ejecución | `development` |
+| `VITE_API_URL` | Build time (frontend) | URL base del backend para API calls | `''` (relativo) |
+
+## Estructura del Dockerfile
+
+```
+Dockerfile (raíz)
+├── Stage 1: builder
+│   ├── node:20-alpine
+│   ├── corepack enable (pnpm)
+│   ├── pnpm install --frozen-lockfile
+│   ├── pnpm --filter frontend build
+│   ├── pnpm --filter backend build
+│   └── cp -r frontend/dist backend/public
+└── Stage 2: producción
+    ├── node:20-alpine (imagen liviana)
+    ├── backend/dist + backend/public
+    ├── npm install --omit=dev
+    ├── USER node (no-root)
+    └── CMD node dist/index.js
+```
+
+## Archivos Legacy
+
+Los Dockerfiles individuales y el pipeline de Cloud Build (GCP) se movieron a `docker/legacy/` para referencia. Ya no se usan para el despliegue actual.
