@@ -1,13 +1,13 @@
-import { onINP } from 'web-vitals';
+import { onINP } from 'web-vitals/attribution';
 import type { INPMetricData } from '../../shared/types';
 
 /**
  * Inicia el tracking de INP usando web-vitals (build de attribución).
  *
- * **Por qué web-vitals:** mide INP de forma estandarizada siguiendo
- * las especificaciones de Google. El build de attribución desglosa
- * el INP en inputDelay, processingDuration y presentationDelay,
- * lo que es clave para el propósito educativo.
+ * **Por qué web-vitals/attribution:** el build de attribución incluye
+ * el desglose de INP en inputDelay, processingDuration y presentationDelay,
+ * lo que es clave para el propósito educativo. El build estándar NO
+ * incluye estos datos.
  *
  * **reportAllChanges:** se activa para ver cada interacción, no solo
  * el peor caso final. Esto permite comparar en tiempo real entre modos.
@@ -24,15 +24,8 @@ export function trackINP(
     (metric) => {
       if (stopped) return;
 
-      const { attribution } = metric as typeof metric & {
-        attribution: {
-          inputDelay: number;
-          processingDuration: number;
-          presentationDelay: number;
-          interactionType: string;
-          interactionTarget: string;
-        };
-      };
+      // Con web-vitals/attribution, attribution siempre está presente
+      const { attribution } = metric;
 
       callback({
         value: metric.value,

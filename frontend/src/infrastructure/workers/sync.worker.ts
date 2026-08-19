@@ -19,25 +19,23 @@ import type { Document, SaveResult } from '../../shared/types';
 import type { SyncResult } from '../../shared/types';
 
 type WorkerMessage =
-  | { type: 'save'; document: Document }
-  | { type: 'sync'; documentId: string };
+  | { type: 'save'; document: Document; apiBase: string }
+  | { type: 'sync'; documentId: string; apiBase: string };
 
 type WorkerResponse =
   | { type: 'saveResult'; result: SaveResult }
   | { type: 'syncResult'; result: SyncResult };
 
-const API_BASE = 'http://localhost:3001';
-
 self.onmessage = async (event: MessageEvent<WorkerMessage>) => {
-  const { type } = event.data;
+  const { type, apiBase } = event.data;
 
   try {
     if (type === 'save') {
-      const result = await saveDocument(event.data.document);
+      const result = await saveDocument(event.data.document, apiBase);
       const response: WorkerResponse = { type: 'saveResult', result };
       self.postMessage(response);
     } else if (type === 'sync') {
-      const result = await syncDocument(event.data.documentId);
+      const result = await syncDocument(event.data.documentId, apiBase);
       const response: WorkerResponse = { type: 'syncResult', result };
       self.postMessage(response);
     }
@@ -55,8 +53,8 @@ self.onmessage = async (event: MessageEvent<WorkerMessage>) => {
   }
 };
 
-async function saveDocument(document: Document): Promise<SaveResult> {
-  const response = await fetch(`${API_BASE}/api/documents`, {
+async function saveDocument(document: Document, apiBase: string): Promise<SaveResult> {
+  const response = await fetch(`${apiBase}/api/documents`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(document),
@@ -69,8 +67,8 @@ async function saveDocument(document: Document): Promise<SaveResult> {
   return response.json() as Promise<SaveResult>;
 }
 
-async function syncDocument(documentId: string): Promise<SyncResult> {
-  const response = await fetch(`${API_BASE}/api/documents/${documentId}/sync`);
+async function syncDocument(documentId: string, apiBase: string): Promise<SyncResult> {
+  const response = await fetch(`${apiBase}/api/documents/${documentId}/sync`);
 
   if (!response.ok) {
     throw new Error(`Sync failed: ${response.statusText}`);
