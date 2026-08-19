@@ -1,4 +1,4 @@
-import type { SpellCheckResult, MisspelledWord } from '../shared/types';
+import type { SpellCheckResult, MisspelledWord } from '../../shared/types';
 import { createSpellCheckResult } from '../entities/spell-check';
 
 /**

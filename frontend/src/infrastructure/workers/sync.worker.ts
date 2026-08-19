@@ -39,13 +39,16 @@ self.onmessage = async (event: MessageEvent<WorkerMessage>) => {
       self.postMessage(response);
     }
   } catch (error) {
-    // Enviar error de vuelta al hilo principal
+    const docId = event.data.type === 'save'
+      ? event.data.document.id
+      : event.data.documentId;
+
     self.postMessage({
       type: type === 'save' ? 'saveResult' : 'syncResult',
       result: {
         success: false,
         savedAt: new Date(),
-        documentId: event.data.document?.id ?? event.data.documentId ?? '',
+        documentId: docId,
         error: error instanceof Error ? error.message : 'Unknown error',
       },
     });

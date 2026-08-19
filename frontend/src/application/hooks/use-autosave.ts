@@ -25,7 +25,7 @@ export function useAutosave() {
 
   /** Guarda el documento (simulado — en producción iría al backend) */
   const save = useCallback(
-    async (content: string, documentId: string): Promise<SaveResult> => {
+    async (_content: string, documentId: string): Promise<SaveResult> => {
       store.setSaveStatus('saving');
 
       try {

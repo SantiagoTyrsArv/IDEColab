@@ -1,4 +1,4 @@
-import type { WordCountResult } from '../shared/types';
+import type { WordCountResult } from '../../shared/types';
 
 /**
  * Caso de uso: contar palabras y caracteres en un texto.

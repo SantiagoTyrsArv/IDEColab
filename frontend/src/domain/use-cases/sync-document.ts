@@ -1,4 +1,4 @@
-import type { SyncResult } from '../shared/types';
+import type { SyncResult } from '../../shared/types';
 
 /**
  * Caso de uso: sincronizar un documento con el servidor.

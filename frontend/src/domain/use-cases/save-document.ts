@@ -1,4 +1,4 @@
-import type { Document, SaveResult } from '../shared/types';
+import type { Document, SaveResult } from '../../shared/types';
 
 /**
  * Caso de uso: guardar un documento en el backend.
