@@ -23,7 +23,6 @@ export function EditorPage() {
     spellCheckStatus,
     version,
     handleInput,
-    handleDebouncedSpellCheck,
     setMode,
     resetMetrics,
   } = useEditor();
@@ -33,13 +32,25 @@ export function EditorPage() {
 
   const wordStats = useMemo(() => countWords(content), [content]);
 
+  /**
+   * Handler del input del editor.
+   *
+   * **Flujo Event Loop (modo ingenuo):**
+   * 1. handleInput ejecuta detectMisspelled SÍNCRONAMENTE → bloquea el hilo
+   * 2. web-vitals captura todo el tiempo como INP
+   * 3. El usuario ve INP alto + long tasks
+   *
+   * **Flujo Event Loop (modo optimizado):**
+   * 1. handleInput envía detectMisspelled al Web Worker → no bloquea
+   * 2. web-vitals captura solo el overhead del handler → INP bajo
+   * 3. El Worker devuelve el resultado después, sin afectar el paint
+   */
   const handleContentChange = useCallback(
     (newContent: string) => {
-      handleInput(newContent);
+      handleInput(newContent, mode);
       scheduleAutosave(newContent, documentId);
-      handleDebouncedSpellCheck(newContent, mode);
     },
-    [handleInput, scheduleAutosave, documentId, handleDebouncedSpellCheck, mode],
+    [handleInput, mode, scheduleAutosave, documentId],
   );
 
   const handleModeChange = useCallback(
