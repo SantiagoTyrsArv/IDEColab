@@ -1,5 +1,5 @@
 {
-  "buildCommand": "pnpm install && pnpm --filter frontend build",
-  "outputDirectory": "frontend/dist",
-  "installCommand": "pnpm install"
+  "installCommand": "npm install -g pnpm@9.15.9 && pnpm install",
+  "buildCommand": "pnpm --filter frontend build",
+  "outputDirectory": "frontend/dist"
 }
