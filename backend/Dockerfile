@@ -3,8 +3,8 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Instalar pnpm via Corepack (versión fija para compatibilidad con lockfile)
-RUN corepack enable && corepack prepare pnpm@11.22.0 --activate
+# Instalar pnpm via Corepack (versión 9.x compatible con lockfile y Node 20)
+RUN corepack enable && corepack prepare pnpm@9.15.9 --activate
 
 # Copiar archivos de workspace primero (aprovecha cache de Docker)
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
