@@ -1,64 +1,57 @@
-# Guía de Despliegue — Vercel + Railway
+# Guía de Despliegue — Vercel + Render
 
 ## Arquitectura de Despliegue
 
-El proyecto se despliega como **dos servicios separados**:
-
 ```
-Vercel (Frontend)                    Railway (Backend)
-├── React + Vite                     ├── Express + Node.js
-├── CDN global                       ├── /api/* endpoints
-├── Auto-deploy al hacer push        ├── In-memory storage
-└── URL: https://taller01.vercel.app └── URL: https://backend.up.railway.app
+Vercel (Frontend)                     Render (Backend)
+├── React + Vite                      ├── Express + Node.js (Docker)
+├── CDN global                        ├── /api/* endpoints
+├── Auto-deploy al hacer push         ├── In-memory storage
+└── URL: https://taller01.vercel.app  └── URL: https://editor-colaborativo.onrender.com
 ```
 
-El frontend llama al backend via `fetch()` usando la URL de Railway configurada en `VITE_API_URL`.
+El frontend llama al backend via `fetch()` usando la URL de Render configurada en `VITE_API_URL`.
 
 ---
 
-## 1. Desplegar el Backend en Railway
+## 1. Desplegar el Backend en Render
 
-### Paso 1: Crear cuenta y proyecto
+### Paso 1: Crear cuenta y servicio
 
-1. Ir a [railway.app](https://railway.app) y crear cuenta
-2. New Project → Deploy from GitHub repo
+1. Ir a [render.com](https://render.com) y crear cuenta
+2. New → Web Service → Connect a GitHub repository
 3. Seleccionar el repositorio `taller01`
 
 ### Paso 2: Configurar el servicio
 
-En el dashboard de Railway, configurar:
+Render detecta el `render.yaml` automáticamente. Si no lo hace, configurar manualmente:
 
 | Campo | Valor |
 |---|---|
-| **Name** | `backend` (o el que prefieras) |
-| **Root Directory** | `backend` |
-| **Build Command** | `pnpm install && pnpm build` |
-| **Start Command** | `pnpm start` |
-
-> **Nota:** Railway detecta `Procfile` automáticamente. Si lo configuras, usa `web: node dist/index.js`.
+| **Name** | `editor-colaborativo-backend` |
+| **Runtime** | Docker |
+| **Dockerfile** | `./backend/Dockerfile` |
+| **Docker Context** | `.` |
+| **Port** | `8080` |
 
 ### Paso 3: Variables de entorno
-
-En el dashboard de Railway → Variables:
 
 | Variable | Valor |
 |---|---|
 | `NODE_ENV` | `production` |
-| `PORT` | Railway lo inyecta automáticamente (no configurar) |
+| `PORT` | Render lo inyecta automáticamente (no configurar) |
 
-### Paso 4: Obtener la URL
-
-Una vez desplegado, Railway asigna una URL pública. Copiarla (ej. `https://backend-taller01.up.railway.app`).
-
-### Paso 5: Verificar
+### Paso 4: Verificar
 
 ```bash
-curl https://backend-taller01.up.railway.app/api/health
+curl https://editor-colaborativo.onrender.com/api/health
 # → {"status":"ok","timestamp":"..."}
 
-curl https://backend-taller01.up.railway.app/api/documents/doc-001
+curl https://editor-colaborativo.onrender.com/api/documents/doc-001
 # → {"id":"doc-001","content":"...",...}
 ```
+
+> **Nota:** El primer request puede tardar 30-60 segundos (cold start con plan gratuito).
 
 ---
 
@@ -72,8 +65,6 @@ curl https://backend-taller01.up.railway.app/api/documents/doc-001
 
 ### Paso 2: Configurar el proyecto
 
-Vercel detecta automáticamente el `vercel.json`. Verificar la configuración:
-
 | Campo | Valor |
 |---|---|
 | **Framework Preset** | Vite |
@@ -83,21 +74,17 @@ Vercel detecta automáticamente el `vercel.json`. Verificar la configuración:
 
 ### Paso 3: Variables de entorno
 
-En el dashboard de Vercel → Settings → Environment Variables:
+En Vercel → Settings → Environment Variables:
 
 | Variable | Valor | Entorno |
 |---|---|---|
-| `VITE_API_URL` | `https://backend-taller01.up.railway.app` | Production, Preview, Development |
+| `VITE_API_URL` | `https://editor-colaborativo.onrender.com` | Production, Preview, Development |
 
-> **Importante:** Reemplazar la URL con la URL real de tu backend en Railway.
+> **Importante:** Reemplazar con la URL real de tu backend en Render.
 
-### Paso 4: Desplegar
+### Paso 4: Verificar
 
-Vercel despliega automáticamente al hacer push a `main`. También genera una URL de preview para cada PR.
-
-### Paso 5: Verificar
-
-Abrir la URL de Vercel (ej. `https://taller01.vercel.app`) y:
+Abrir la URL de Vercel y:
 1. Escribir en el editor → verificar que el backend responde
 2. Cambiar entre modos → verificar que las métricas se actualizan
 
@@ -109,20 +96,18 @@ Abrir la URL de Vercel (ej. `https://taller01.vercel.app`) y:
 
 | Variable | Descripción | Ejemplo |
 |---|---|---|
-| `VITE_API_URL` | URL del backend en Railway | `https://backend.up.railway.app` |
+| `VITE_API_URL` | URL del backend en Render | `https://editor-colaborativo.onrender.com` |
 
-### Railway (Backend)
+### Render (Backend)
 
 | Variable | Descripción | Default |
 |---|---|---|
-| `PORT` | Puerto del servidor (Railway lo inyecta) | No configurar |
+| `PORT` | Puerto del servidor (Render lo inyecta) | `8080` |
 | `NODE_ENV` | Modo de ejecución | `production` |
 
 ---
 
 ## 4. Desarrollo Local
-
-El desarrollo local usa frontend y backend por separado con hot reload:
 
 ```bash
 # Instalar dependencias
@@ -132,13 +117,9 @@ pnpm install
 pnpm dev
 # Frontend: http://localhost:5173 (Vite dev server)
 # Backend:  http://localhost:3001 (tsx watch)
-
-# O por separado:
-pnpm dev:frontend
-pnpm dev:backend
 ```
 
-En desarrollo, el frontend necesita saber la URL del backend. Crear `frontend/.env.local`:
+En desarrollo, crear `frontend/.env.local`:
 
 ```bash
 VITE_API_URL=http://localhost:3001
@@ -151,12 +132,10 @@ VITE_API_URL=http://localhost:3001
 ### Vercel
 - **Production:** push a `main` → deploy automático
 - **Preview:** cada PR genera una URL de preview
-- **Rollback:** dashboard → Deployments → promover uno anterior
 
-### Railway
-- **Production:** push a `main` → deploy automático
+### Render
+- **Production:** push a `main` → rebuild automático
 - **Logs:** dashboard → Logs en tiempo real
-- **Metrics:** dashboard → Metrics (CPU, memoria, requests)
 
 ---
 
@@ -164,7 +143,7 @@ VITE_API_URL=http://localhost:3001
 
 | Problema | Causa | Solución |
 |---|---|---|
-| Frontend no carga datos | `VITE_API_URL` no está configurado | Agregar la variable en Vercel |
-| CORS error en desarrollo | Backend no permite el origin del frontend | Verificar `allowedOrigins` en `index.ts` |
-| Backend no responde | Railway está en cold start | Esperar 10-30 segundos |
-| Build falla en Railway | pnpm no está instalado | Verificar que el Procfile existe |
+| Frontend no carga datos | `VITE_API_URL` no configurado | Agregar la variable en Vercel |
+| Backend tarda en responder | Cold start en Render | Esperar 30-60s o upgrade a plan pago |
+| CORS error | Backend no permite el origin | Verificar `allowedOrigins` en `index.ts` |
+| Build falla en Render | Versión de pnpm incompatible | El Dockerfile usa `pnpm@11.22.0` fija |

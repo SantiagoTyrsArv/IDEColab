@@ -143,7 +143,7 @@ Un INP < 200ms es "bueno"; > 500ms es "malo".
 - **Backend:** Express (Node.js, in-memory)
 - **Testing:** Vitest + React Testing Library
 - **Linting:** ESLint + TypeScript-ESLint + Prettier
-- **Despliegue:** Vercel (frontend) + Railway (backend)
+- **Despliegue:** Vercel (frontend) + Render (backend)
 
 ## Cómo Correr Localmente
 
@@ -236,7 +236,7 @@ taller01/
 
 Ver [DEPLOYMENT.md](./DEPLOYMENT.md) para instrucciones detalladas.
 
-### Vercel + Railway (recomendado)
+### Vercel + Render (recomendado)
 
 - **Frontend** se despliega en **Vercel** (gratis, CDN global, auto-deploy al hacer push)
-- **Backend** se despliega en **Railway** (gratis para uso básico, soporta Node.js)
+- **Backend** se despliega en **Render** (gratis con cold start, Docker)

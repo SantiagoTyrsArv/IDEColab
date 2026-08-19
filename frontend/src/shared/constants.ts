@@ -13,8 +13,8 @@ export const DEFAULT_DOCUMENT_ID = 'doc-001';
 /**
  * URL base del backend.
  *
- * En producción (Vercel + Railway): configurar VITE_API_URL en el dashboard
- * de Vercel apuntando a la URL de Railway (ej. https://backend.up.railway.app).
+ * En producción (Vercel + Render): configurar VITE_API_URL en el dashboard
+ * de Vercel apuntando a la URL de Render (ej. https://editor-colaborativo.onrender.com).
  *
  * En desarrollo: '' — relativo al mismo origen, o configurar
  * VITE_API_URL=http://localhost:3001 en .env.local si el backend corre por separado.
