@@ -41,14 +41,14 @@ app.use(express.json());
 app.use('/api/documents', documentRoutes);
 app.use('/api', syncRoutes);
 
-// Health check para Render
+// Health check
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // ─── Archivos estáticos del frontend ─────────────────────────
 // En desarrollo: backend/public/ puede no existir, servir solo si existe
-// En producción: el Dockerfile copia el build del frontend aquí
+// En producción: el build del frontend se copia aquí durante el build
 const publicDir = path.join(__dirname, '..', 'public');
 app.use(express.static(publicDir));
 

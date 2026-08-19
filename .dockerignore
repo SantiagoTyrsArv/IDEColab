@@ -1,32 +1,23 @@
 # Dependencias y artefactos de build
 node_modules
 dist
-dist-ssr
 frontend/dist
 backend/dist
-backend/public
 
 # Git
 .git
 .gitignore
 
-# Archivos de configuración que no se necesitan en la imagen
+# Archivos de configuración
 .env
 .env.*
 *.local
 .vscode
 .idea
 
-# Dockerfiles legacy (ya no se usan para el build)
-frontend/Dockerfile
-backend/Dockerfile
-docker/
-
-# Documentación y CI/CD
+# Documentación
 README.md
 DEPLOYMENT.md
-cloudbuild.yaml
-render.yaml
 
 # Logs
 logs

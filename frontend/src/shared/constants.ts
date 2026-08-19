@@ -13,11 +13,11 @@ export const DEFAULT_DOCUMENT_ID = 'doc-001';
 /**
  * URL base del backend.
  *
- * En producción (servicio único): '' — relativo al mismo origen.
- * fetch('/api/documents') → https://mi-app.onrender.com/api/documents
+ * En producción (Vercel + Railway): configurar VITE_API_URL en el dashboard
+ * de Vercel apuntando a la URL de Railway (ej. https://backend.up.railway.app).
  *
- * En desarrollo con backend separado: configurar VITE_API_URL=http://localhost:3001
- * fetch('http://localhost:3001/api/documents')
+ * En desarrollo: '' — relativo al mismo origen, o configurar
+ * VITE_API_URL=http://localhost:3001 en .env.local si el backend corre por separado.
  */
 export const API_BASE_URL = import.meta.env.VITE_API_URL ?? '';
 

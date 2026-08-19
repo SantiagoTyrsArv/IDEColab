@@ -143,7 +143,7 @@ Un INP < 200ms es "bueno"; > 500ms es "malo".
 - **Backend:** Express (Node.js, in-memory)
 - **Testing:** Vitest + React Testing Library
 - **Linting:** ESLint + TypeScript-ESLint + Prettier
-- **Despliegue:** Render (Docker)
+- **Despliegue:** Vercel (frontend) + Railway (backend)
 
 ## Cómo Correr Localmente
 
@@ -213,7 +213,7 @@ taller01/
 │   └── src/
 │       ├── routes/              # Endpoints REST
 │       └── services/            # Storage en memoria
-├── cloudbuild.yaml              # CI/CD para GCP
+├── vercel.json                  # Configuración de Vercel
 ├── .prettierrc                  # Configuración de formato
 └── DEPLOYMENT.md                # Guía de despliegue
 ```
@@ -236,15 +236,7 @@ taller01/
 
 Ver [DEPLOYMENT.md](./DEPLOYMENT.md) para instrucciones detalladas.
 
-### Render (recomendado)
+### Vercel + Railway (recomendado)
 
-El proyecto se despliega como un **servicio Docker único** en Render. El backend Express sirve la API y los archivos estáticos del frontend.
-
-```bash
-# Probar el build de producción localmente
-docker build -t editor-colaborativo .
-docker run -p 8080:8080 -e NODE_ENV=production editor-colaborativo
-# Abrir http://localhost:8080
-```
-
-En Render: conectar el repositorio → detecta `render.yaml` automáticamente → deploy.
+- **Frontend** se despliega en **Vercel** (gratis, CDN global, auto-deploy al hacer push)
+- **Backend** se despliega en **Railway** (gratis para uso básico, soporta Node.js)
