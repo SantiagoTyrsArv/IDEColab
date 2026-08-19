@@ -15,9 +15,7 @@ import type { INPMetricData } from '../../shared/types';
  * @param callback - Función que recibe cada medición de INP
  * @returns Función para detener el tracking
  */
-export function trackINP(
-  callback: (metric: INPMetricData) => void,
-): () => void {
+export function trackINP(callback: (metric: INPMetricData) => void): () => void {
   let stopped = false;
 
   onINP(

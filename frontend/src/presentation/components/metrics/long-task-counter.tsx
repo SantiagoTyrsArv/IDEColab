@@ -35,17 +35,18 @@ export function LongTaskCounter({ count, recentTasks }: LongTaskCounterProps) {
 
       {recentTasks.length > 0 && (
         <div className="space-y-1 max-h-32 overflow-y-auto">
-          {recentTasks.slice(-5).reverse().map((task, i) => (
-            <div
-              key={`${task.startTime}-${i}`}
-              className="flex justify-between text-[10px] text-gray-400 py-0.5 border-t border-gray-700"
-            >
-              <span>{task.entryType}</span>
-              <span className="font-mono text-metrics-bad">
-                {task.duration.toFixed(1)}ms
-              </span>
-            </div>
-          ))}
+          {recentTasks
+            .slice(-5)
+            .reverse()
+            .map((task, i) => (
+              <div
+                key={`${task.startTime}-${i}`}
+                className="flex justify-between text-[10px] text-gray-400 py-0.5 border-t border-gray-700"
+              >
+                <span>{task.entryType}</span>
+                <span className="font-mono text-metrics-bad">{task.duration.toFixed(1)}ms</span>
+              </div>
+            ))}
         </div>
       )}
     </div>

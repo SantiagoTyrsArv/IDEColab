@@ -55,8 +55,7 @@ export function EditorPage() {
       <header className="border-b border-gray-800 bg-gray-900/50 backdrop-blur">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <h1 className="text-xl font-bold">
-            Editor Colaborativo{' '}
-            <span className="text-editor-accent">· Event Loop Lab</span>
+            Editor Colaborativo <span className="text-editor-accent">· Event Loop Lab</span>
           </h1>
           <p className="text-xs text-gray-400 mt-1">
             Caso de estudio: Event Loop, Tasks/Microtasks e INP en React + TypeScript
@@ -76,10 +75,7 @@ export function EditorPage() {
               spellCheckStatus={spellCheckStatus}
               version={version}
             />
-            <TextEditor
-              value={content}
-              onChange={handleContentChange}
-            />
+            <TextEditor value={content} onChange={handleContentChange} />
           </div>
 
           {/* Columna derecha: Métricas y Controls */}

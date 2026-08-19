@@ -24,42 +24,48 @@ export function useAutosave() {
   const store = useEditorStore();
 
   /** Guarda el documento (simulado — en producción iría al backend) */
-  const save = useCallback(async (content: string, documentId: string): Promise<SaveResult> => {
-    store.setSaveStatus('saving');
+  const save = useCallback(
+    async (content: string, documentId: string): Promise<SaveResult> => {
+      store.setSaveStatus('saving');
 
-    try {
-      // Simular delay de red
-      await new Promise((resolve) => setTimeout(resolve, 300));
+      try {
+        // Simular delay de red
+        await new Promise((resolve) => setTimeout(resolve, 300));
 
-      // En modo real, aquí iría: await saveDocumentToServer(doc);
-      const result: SaveResult = {
-        success: true,
-        savedAt: new Date(),
-        documentId,
-      };
+        // En modo real, aquí iría: await saveDocumentToServer(doc);
+        const result: SaveResult = {
+          success: true,
+          savedAt: new Date(),
+          documentId,
+        };
 
-      store.setSaveStatus('saved');
-      return result;
-    } catch {
-      store.setSaveStatus('error');
-      return {
-        success: false,
-        savedAt: new Date(),
-        documentId,
-      };
-    }
-  }, [store]);
+        store.setSaveStatus('saved');
+        return result;
+      } catch {
+        store.setSaveStatus('error');
+        return {
+          success: false,
+          savedAt: new Date(),
+          documentId,
+        };
+      }
+    },
+    [store],
+  );
 
   /** Programa un guardado con debounce */
-  const scheduleAutosave = useCallback((content: string, documentId: string) => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-    }
+  const scheduleAutosave = useCallback(
+    (content: string, documentId: string) => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
 
-    timerRef.current = setTimeout(() => {
-      void save(content, documentId);
-    }, AUTOSAVE_DEBOUNCE_MS);
-  }, [save]);
+      timerRef.current = setTimeout(() => {
+        void save(content, documentId);
+      }, AUTOSAVE_DEBOUNCE_MS);
+    },
+    [save],
+  );
 
   // Cleanup al desmontar
   useEffect(() => {

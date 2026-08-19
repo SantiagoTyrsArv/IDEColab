@@ -1,9 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  updateMetricsWithINP,
-  updateMetricsWithLongTask,
-  INITIAL_METRICS_STATE,
-} from '../metrics';
+import { updateMetricsWithINP, updateMetricsWithLongTask, INITIAL_METRICS_STATE } from '../metrics';
 import type { INPMetricData, LongTaskEntry } from '../../../shared/types';
 
 describe('metrics entities', () => {
@@ -32,11 +28,7 @@ describe('metrics entities', () => {
         'naive',
       );
 
-      const state2 = updateMetricsWithINP(
-        state1,
-        { value: 100 } as INPMetricData,
-        'naive',
-      );
+      const state2 = updateMetricsWithINP(state1, { value: 100 } as INPMetricData, 'naive');
 
       expect(state2.worstINP).toBe(300);
       expect(state2.currentINP).toBe(100);
@@ -62,11 +54,7 @@ describe('metrics entities', () => {
         entryType: 'longtask',
       };
 
-      const newState = updateMetricsWithLongTask(
-        INITIAL_METRICS_STATE,
-        entry,
-        10_000,
-      );
+      const newState = updateMetricsWithLongTask(INITIAL_METRICS_STATE, entry, 10_000);
 
       expect(newState.longTaskCount).toBe(1);
     });
@@ -78,11 +66,7 @@ describe('metrics entities', () => {
         entryType: 'longtask',
       };
 
-      const state = updateMetricsWithLongTask(
-        INITIAL_METRICS_STATE,
-        oldEntry,
-        10_000,
-      );
+      const state = updateMetricsWithLongTask(INITIAL_METRICS_STATE, oldEntry, 10_000);
 
       // La task antigua se filtra porque está fuera de la ventana
       expect(state.longTaskCount).toBe(0);

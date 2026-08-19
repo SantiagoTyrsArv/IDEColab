@@ -48,9 +48,7 @@ export function updateMetricsWithLongTask(
   windowMs: number,
 ): MetricsState {
   const now = performance.now();
-  const recentTasks = [...state.longTasks, entry].filter(
-    (t) => now - t.startTime <= windowMs,
-  );
+  const recentTasks = [...state.longTasks, entry].filter((t) => now - t.startTime <= windowMs);
 
   return {
     ...state,

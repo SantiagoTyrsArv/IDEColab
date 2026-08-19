@@ -24,11 +24,15 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Copiar built files
+# Copiar built files y package.json
 COPY --from=builder /app/backend/dist ./dist
 COPY --from=builder /app/backend/package.json ./
-COPY --from=builder /app/node_modules ./node_modules
+
+# Instalar solo dependencias de producción
+RUN npm install --omit=dev --ignore-scripts
 
 EXPOSE 3001
+
+USER node
 
 CMD ["node", "dist/index.js"]

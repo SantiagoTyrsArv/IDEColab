@@ -36,7 +36,8 @@ export const storage = new InMemoryStorage();
 // Documento por defecto para las demostraciones
 storage.save({
   id: 'doc-001',
-  content: 'Bienvenido al Editor Colaborativo — Event Loop Lab.\n\nEste editor demuestra el comportamiento del Event Loop de JavaScript ante interacciones reales de usuario.',
+  content:
+    'Bienvenido al Editor Colaborativo — Event Loop Lab.\n\nEste editor demuestra el comportamiento del Event Loop de JavaScript ante interacciones reales de usuario.',
   createdAt: new Date(),
   updatedAt: new Date(),
   version: 1,

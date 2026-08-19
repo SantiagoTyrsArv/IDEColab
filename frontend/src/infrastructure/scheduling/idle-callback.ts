@@ -12,10 +12,7 @@
  * @param timeout - Tiempo máximo de espera en ms (por defecto 5000)
  * @returns ID del request para poder cancelarlo
  */
-export function runWhenIdle(
-  fn: (deadline: IdleDeadline) => void,
-  timeout: number = 5000,
-): number {
+export function runWhenIdle(fn: (deadline: IdleDeadline) => void, timeout: number = 5000): number {
   if (typeof requestIdleCallback !== 'undefined') {
     return requestIdleCallback(fn, { timeout });
   }

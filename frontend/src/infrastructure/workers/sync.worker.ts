@@ -23,8 +23,7 @@ type WorkerMessage =
   | { type: 'sync'; documentId: string; apiBase: string };
 
 type WorkerResponse =
-  | { type: 'saveResult'; result: SaveResult }
-  | { type: 'syncResult'; result: SyncResult };
+  { type: 'saveResult'; result: SaveResult } | { type: 'syncResult'; result: SyncResult };
 
 self.onmessage = async (event: MessageEvent<WorkerMessage>) => {
   const { type, apiBase } = event.data;

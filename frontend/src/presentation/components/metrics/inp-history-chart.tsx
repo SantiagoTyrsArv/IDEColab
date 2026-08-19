@@ -16,9 +16,7 @@ export function INPHistoryChart({ history }: INPHistoryChartProps) {
   if (history.length === 0) {
     return (
       <div className="p-4 bg-gray-800 rounded-lg border border-gray-700">
-        <h3 className="text-sm font-semibold text-gray-300 mb-2">
-          Historial de INP
-        </h3>
+        <h3 className="text-sm font-semibold text-gray-300 mb-2">Historial de INP</h3>
         <p className="text-xs text-gray-500 text-center py-4">
           Interactúa con el editor para ver datos aquí
         </p>
@@ -52,10 +50,12 @@ export function INPHistoryChart({ history }: INPHistoryChartProps) {
                 role="img"
                 aria-label={`INP: ${Math.round(item.value)}ms (${item.mode})`}
               />
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1
+              <div
+                className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1
                             px-1.5 py-0.5 bg-gray-900 text-[9px] text-white rounded
                             opacity-0 group-hover:opacity-100 transition-opacity
-                            whitespace-nowrap pointer-events-none z-10">
+                            whitespace-nowrap pointer-events-none z-10"
+              >
                 {Math.round(item.value)}ms
               </div>
             </div>

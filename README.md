@@ -11,6 +11,100 @@ Esta aplicación es un editor de texto colaborativo simplificado que evidencia c
 
 Un panel de métricas en vivo muestra la diferencia de INP entre ambos modos.
 
+## Diagrama de Arquitectura
+
+```mermaid
+graph TB
+    subgraph "Presentación (React)"
+        UI[TextEditor + MetricsPanel]
+    end
+
+    subgraph "Aplicación (Hooks + Zustand)"
+        Hook[useEditor Hook]
+        Store[(Zustand Store)]
+    end
+
+    subgraph "Dominio (Lógica Pura)"
+        CW[countWords]
+        DM[detectMisspelled]
+        SD[saveDocument]
+    end
+
+    subgraph "Infraestructura"
+        MT[queueMicrotask]
+        PT[scheduler.postTask]
+        YLD[scheduler.yield]
+        W1[spellcheck.worker.ts]
+        W2[sync.worker.ts]
+        API[document-client.ts]
+        MET[web-vitals + PerfObserver]
+    end
+
+    subgraph "Backend (Express)"
+        BE[REST API]
+        DB[(In-Memory Storage)]
+    end
+
+    UI --> Hook
+    Hook --> Store
+    Hook --> CW
+    Hook --> DM
+    Hook --> MT
+    Hook --> YLD
+    DM -.->|modo ingenuo| Hook
+    DM -.->|modo optimizado| W1
+    W1 --> DM
+    Hook --> API
+    API --> BE
+    BE --> DB
+    MET --> Store
+```
+
+## Diagrama del Event Loop — Modo Ingenuo vs Optimizado
+
+```mermaid
+sequenceDiagram
+    participant U as Usuario
+    participant EL as Event Loop
+    participant MT as Main Thread
+    participant W as Web Worker
+    participant R as Renderer
+
+    Note over U,R: === MODO INGENUDO ===
+    U->>EL: Keypress
+    EL->>MT: Ejecutar event handler
+    MT->>MT: countWords (microtarea)
+    MT->>MT: detectMisspelled (CPU intensivo, ~500ms)
+    Note over MT: BLOQUEADO - no puede pintar
+    MT-->>R: Paint (tarde, con lag)
+    Note over R: INP alto (>200ms), Long Task detectada
+
+    Note over U,R: === MODO OPTIMIZADO ===
+    U->>EL: Keypress
+    EL->>MT: Ejecutar event handler
+    MT->>MT: queueMicrotask: countWords
+    MT->>W: postMessage: detectMisspelled
+    Note over MT: LIBRE - puede responder inputs
+    MT-->>R: Paint (rápido, sin lag)
+    W->>MT: postMessage: resultado
+    Note over R: INP bajo (<200ms), sin Long Tasks
+```
+
+## Diagrama de Flujo de Datos
+
+```mermaid
+flowchart LR
+    A[Input del Usuario] --> B{Modo?}
+    B -->|Ingenuo| C[detectMisspelled en Main Thread]
+    B -->|Optimizado| D[postMessage a Web Worker]
+    C --> E[Bloquea hilo principal]
+    D --> F[Worker ejecuta en hilo separado]
+    E --> G[Long Task + INP alto]
+    F --> H[Main thread libre + INP bajo]
+    G --> I[Panel de Métricas]
+    H --> I
+```
+
 ## Conceptos Clave que Demuestra
 
 ### Event Loop
@@ -44,11 +138,11 @@ Un INP < 200ms es "bueno"; > 500ms es "malo".
 
 - **Frontend:** React 19 + TypeScript (strict) + Vite
 - **State:** Zustand
-- **Métricas:** web-vitals + PerformanceObserver
+- **Métricas:** web-vitals/attribution + PerformanceObserver
 - **Estilos:** Tailwind CSS
 - **Backend:** Express (Node.js, in-memory)
 - **Testing:** Vitest + React Testing Library
-- **Linting:** ESLint + TypeScript-ESLint
+- **Linting:** ESLint + TypeScript-ESLint + Prettier
 - **Despliegue:** Google Cloud Run
 
 ## Cómo Correr Localmente
@@ -83,9 +177,11 @@ pnpm test           # Ejecutar todos los tests
 pnpm --filter frontend test:watch   # Watch mode
 ```
 
-### Lint y Typecheck
+### Lint, Format y Typecheck
 ```bash
 pnpm lint           # ESLint en todos los paquetes
+pnpm format         # Prettier: formatear todo el código
+pnpm format:check   # Verificar formato sin modificar
 pnpm typecheck      # tsc --noEmit en todos los paquetes
 ```
 
@@ -103,19 +199,22 @@ taller01/
 │       ├── domain/              # Lógica de negocio pura
 │       │   ├── entities/        # Document, WordCount, Metrics
 │       │   └── use-cases/       # countWords, detectMisspelled
-│       ├── application/hooks/   # Orquestación (useEditor, useAutosave)
+│       ├── application/         # Orquestación
+│       │   ├── hooks/           # useEditor, useAutosave
+│       │   └── store.ts         # Zustand store
 │       ├── infrastructure/      # Detalles técnicos
 │       │   ├── scheduling/      # Wrappers de micro/macrotareas
 │       │   ├── workers/         # Web Workers
 │       │   ├── metrics/         # web-vitals + PerformanceObserver
 │       │   └── api/             # Clientes HTTP
 │       ├── presentation/        # Componentes React
-│       └── shared/              # Tipos, constantes, store
+│       └── shared/              # Tipos y constantes
 ├── backend/                     # Express server (mock)
 │   └── src/
 │       ├── routes/              # Endpoints REST
 │       └── services/            # Storage en memoria
 ├── cloudbuild.yaml              # CI/CD para GCP
+├── .prettierrc                  # Configuración de formato
 └── DEPLOYMENT.md                # Guía de despliegue
 ```
 
@@ -129,7 +228,7 @@ taller01/
 2. **Cambia a modo "Optimizado"** y repite la escritura
    - Las **long tasks** deberían desaparecer
    - El **INP** bajará significativamente
-   - El trabajo se distribuye en microtareas y Workers
+   - El spell check corre en un Web Worker (hilo separado)
 
 3. **Compara los gráficos** del historial de INP para ver la diferencia visual
 

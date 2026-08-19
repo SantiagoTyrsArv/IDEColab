@@ -57,7 +57,6 @@ export function useEditor() {
         workerRef.current = null;
       }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   /**
@@ -111,20 +110,23 @@ export function useEditor() {
    * Maneja el input del usuario.
    * Actualiza el contenido y dispara conteo de palabras como microtarea.
    */
-  const handleInput = useCallback((newContent: string) => {
-    store.setContent(newContent);
-    store.setSaveStatus('editing');
-
-    // Microtarea: countWords se ejecuta después del handler actual,
-    // antes del siguiente render. Esto mantiene el contador sincronizado
-    // sin causar un frame intermedio con valor desactualizado.
-    runAsMicrotask(() => {
-      const result = countWords(newContent);
-      // Actualizar el store con el resultado del conteo
+  const handleInput = useCallback(
+    (newContent: string) => {
       store.setContent(newContent);
-      void result;
-    });
-  }, [store]);
+      store.setSaveStatus('editing');
+
+      // Microtarea: countWords se ejecuta después del handler actual,
+      // antes del siguiente render. Esto mantiene el contador sincronizado
+      // sin causar un frame intermedio con valor desactualizado.
+      runAsMicrotask(() => {
+        const result = countWords(newContent);
+        // Actualizar el store con el resultado del conteo
+        store.setContent(newContent);
+        void result;
+      });
+    },
+    [store],
+  );
 
   /**
    * Dispara el chequeo ortográfico según el modo actual.
@@ -135,50 +137,56 @@ export function useEditor() {
    * **Modo optimizado:** detectMisspelled corre en un Web Worker (hilo separado).
    * El hilo principal queda libre, no hay long tasks, y el INP mejora.
    */
-  const triggerSpellCheck = useCallback((text: string, mode: ExecutionMode) => {
-    // Limpiar timer anterior
-    if (spellCheckTimerRef.current) {
-      clearTimeout(spellCheckTimerRef.current);
-    }
+  const triggerSpellCheck = useCallback(
+    (text: string, mode: ExecutionMode) => {
+      // Limpiar timer anterior
+      if (spellCheckTimerRef.current) {
+        clearTimeout(spellCheckTimerRef.current);
+      }
 
-    if (mode === 'naive') {
-      // MODO INGENUDO: todo corre en el hilo principal, bloqueando el render.
-      // El usuario experimentará lag perceptible mientras se ejecuta detectMisspelled.
-      store.setSpellCheckStatus('checking');
-      const result = detectMisspelled(text, DICTIONARY_WORDS);
-      logSpellCheckResult(result);
-      store.setSpellCheckStatus('done');
-    } else {
-      // MODO OPTIMIZADO: el trabajo pesado se delega al Web Worker.
-      // El Worker corre en un hilo separado del navegador, sin bloquear
-      // el hilo principal ni impedir que React pinte frames.
-      store.setSpellCheckStatus('checking');
+      if (mode === 'naive') {
+        // MODO INGENUDO: todo corre en el hilo principal, bloqueando el render.
+        // El usuario experimentará lag perceptible mientras se ejecuta detectMisspelled.
+        store.setSpellCheckStatus('checking');
+        const result = detectMisspelled(text, DICTIONARY_WORDS);
+        logSpellCheckResult(result);
+        store.setSpellCheckStatus('done');
+      } else {
+        // MODO OPTIMIZADO: el trabajo pesado se delega al Web Worker.
+        // El Worker corre en un hilo separado del navegador, sin bloquear
+        // el hilo principal ni impedir que React pinte frames.
+        store.setSpellCheckStatus('checking');
 
-      runSpellCheckInWorker(text)
-        .then((result) => {
-          logSpellCheckResult(result);
-          store.setSpellCheckStatus('done');
-        })
-        .catch((error: unknown) => {
-          console.error('[SpellCheck Worker] Error:', error);
-          store.setSpellCheckStatus('done');
-        });
-    }
-  }, [store, runSpellCheckInWorker]);
+        runSpellCheckInWorker(text)
+          .then((result) => {
+            logSpellCheckResult(result);
+            store.setSpellCheckStatus('done');
+          })
+          .catch((error: unknown) => {
+            console.error('[SpellCheck Worker] Error:', error);
+            store.setSpellCheckStatus('done');
+          });
+      }
+    },
+    [store, runSpellCheckInWorker],
+  );
 
   /**
    * Maneja el debounce para spell check.
    * Se ejecuta 600ms después del último input para no sobrecargar.
    */
-  const handleDebouncedSpellCheck = useCallback((text: string, mode: ExecutionMode) => {
-    if (spellCheckTimerRef.current) {
-      clearTimeout(spellCheckTimerRef.current);
-    }
+  const handleDebouncedSpellCheck = useCallback(
+    (text: string, mode: ExecutionMode) => {
+      if (spellCheckTimerRef.current) {
+        clearTimeout(spellCheckTimerRef.current);
+      }
 
-    spellCheckTimerRef.current = setTimeout(() => {
-      triggerSpellCheck(text, mode);
-    }, 600);
-  }, [triggerSpellCheck]);
+      spellCheckTimerRef.current = setTimeout(() => {
+        triggerSpellCheck(text, mode);
+      }, 600);
+    },
+    [triggerSpellCheck],
+  );
 
   return {
     content: store.content,
@@ -197,6 +205,6 @@ export function useEditor() {
 function logSpellCheckResult(result: SpellCheckResult): void {
   console.log(
     `[SpellCheck] ${result.wordsChecked} palabras revisadas, ` +
-    `${result.misspelled.length} errores encontrados en ${result.checkDurationMs.toFixed(1)}ms`,
+      `${result.misspelled.length} errores encontrados en ${result.checkDurationMs.toFixed(1)}ms`,
   );
 }

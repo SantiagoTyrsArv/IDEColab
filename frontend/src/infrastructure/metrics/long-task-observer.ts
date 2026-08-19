@@ -17,9 +17,7 @@ import { LONG_TASK_THRESHOLD_MS } from '../../shared/constants';
  * @param callback - Función que recibe cada long task detectada
  * @returns Función para detener la observación
  */
-export function trackLongTasks(
-  callback: (entry: LongTaskEntry) => void,
-): () => void {
+export function trackLongTasks(callback: (entry: LongTaskEntry) => void): () => void {
   if (typeof PerformanceObserver === 'undefined') {
     return () => {};
   }

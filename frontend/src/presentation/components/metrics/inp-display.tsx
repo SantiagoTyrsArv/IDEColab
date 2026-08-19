@@ -20,9 +20,7 @@ interface INPDisplayProps {
 export function INPDisplay({ currentINP, worstINP, breakdown }: INPDisplayProps) {
   return (
     <div className="p-4 bg-gray-800 rounded-lg border border-gray-700">
-      <h3 className="text-sm font-semibold text-gray-300 mb-3">
-        INP (Interaction to Next Paint)
-      </h3>
+      <h3 className="text-sm font-semibold text-gray-300 mb-3">INP (Interaction to Next Paint)</h3>
 
       <div className="grid grid-cols-2 gap-3 mb-4">
         <MetricCard
@@ -31,12 +29,7 @@ export function INPDisplay({ currentINP, worstINP, breakdown }: INPDisplayProps)
           unit="ms"
           rating={getINPRating(currentINP)}
         />
-        <MetricCard
-          label="Peor INP"
-          value={worstINP}
-          unit="ms"
-          rating={getINPRating(worstINP)}
-        />
+        <MetricCard label="Peor INP" value={worstINP} unit="ms" rating={getINPRating(worstINP)} />
       </div>
 
       {breakdown && (
@@ -85,9 +78,7 @@ function MetricCard({
 
   return (
     <div className="p-3 bg-gray-900 rounded-lg">
-      <div className="text-[10px] font-medium text-gray-400 uppercase tracking-wide">
-        {label}
-      </div>
+      <div className="text-[10px] font-medium text-gray-400 uppercase tracking-wide">{label}</div>
       <div className={`text-2xl font-bold ${colors[rating]}`} aria-live="polite">
         {Math.round(value)}
         <span className="text-sm font-normal text-gray-500 ml-1">{unit}</span>
@@ -123,9 +114,7 @@ function BreakdownBar({
           aria-label={`${label}: ${Math.round(value)}ms`}
         />
       </div>
-      <span className="w-12 text-right text-gray-300 font-mono">
-        {Math.round(value)}ms
-      </span>
+      <span className="w-12 text-right text-gray-300 font-mono">{Math.round(value)}ms</span>
     </div>
   );
 }

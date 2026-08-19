@@ -17,11 +17,7 @@ interface MetricsPanelProps {
  */
 export function MetricsPanel({ metrics, onReset }: MetricsPanelProps) {
   return (
-    <aside
-      role="complementary"
-      aria-label="Panel de métricas de rendimiento"
-      className="space-y-4"
-    >
+    <aside role="complementary" aria-label="Panel de métricas de rendimiento" className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-bold text-white">Métricas de Performance</h2>
         <button
@@ -40,10 +36,7 @@ export function MetricsPanel({ metrics, onReset }: MetricsPanelProps) {
         breakdown={metrics.inpBreakdown}
       />
 
-      <LongTaskCounter
-        count={metrics.longTaskCount}
-        recentTasks={metrics.longTasks}
-      />
+      <LongTaskCounter count={metrics.longTaskCount} recentTasks={metrics.longTasks} />
 
       <INPHistoryChart history={metrics.inpHistory} />
     </aside>

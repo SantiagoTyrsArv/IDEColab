@@ -8,24 +8,28 @@ const PORT = process.env.PORT ?? 3001;
 
 // CORS restrictivo: solo permitir el frontend en desarrollo y producción
 const allowedOrigins = [
-  'http://localhost:5173',  // Vite dev server
-  'http://localhost:3000',  // Alternativa
+  'http://localhost:5173', // Vite dev server
+  'http://localhost:3000', // Alternativa
 ];
 
 // En producción, permitir cualquier origen de Cloud Run
 const isProduction = process.env.NODE_ENV === 'production';
 
-app.use(cors({
-  origin: isProduction ? true : (origin, callback) => {
-    // Permitir requests sin origin (curl, Postman, workers)
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error(`Origin ${origin} not allowed by CORS`));
-    }
-  },
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: isProduction
+      ? true
+      : (origin, callback) => {
+          // Permitir requests sin origin (curl, Postman, workers)
+          if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+          } else {
+            callback(new Error(`Origin ${origin} not allowed by CORS`));
+          }
+        },
+    credentials: true,
+  }),
+);
 
 app.use(express.json());
 

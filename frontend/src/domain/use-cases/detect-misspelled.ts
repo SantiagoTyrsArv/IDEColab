@@ -17,10 +17,7 @@ import { createSpellCheckResult } from '../entities/spell-check';
  * @param dictionary - Lista de palabras correctas
  * @returns Resultado con palabras mal detectadas y duración del chequeo
  */
-export function detectMisspelled(
-  text: string,
-  dictionary: readonly string[],
-): SpellCheckResult {
+export function detectMisspelled(text: string, dictionary: readonly string[]): SpellCheckResult {
   const startTime = performance.now();
 
   if (!text || text.trim().length === 0) {
