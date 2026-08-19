@@ -5,7 +5,7 @@ import { TextEditor } from '../components/editor/text-editor';
 import { EditorToolbar } from '../components/editor/editor-toolbar';
 import { MetricsPanel } from '../components/metrics/metrics-panel';
 import { ModeSwitch } from '../components/mode/mode-switch';
-import { useEditorStore } from '../../shared/store';
+import { useEditorStore } from '../../application/store';
 import { countWords } from '../../domain/use-cases/count-words';
 
 /**

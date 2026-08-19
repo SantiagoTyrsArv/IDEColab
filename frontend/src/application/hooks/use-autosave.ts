@@ -1,5 +1,5 @@
 import { useCallback, useRef, useEffect } from 'react';
-import { useEditorStore } from '../../shared/store';
+import { useEditorStore } from '../store';
 import { AUTOSAVE_DEBOUNCE_MS } from '../../shared/constants';
 import type { SaveResult } from '../../shared/types';
 

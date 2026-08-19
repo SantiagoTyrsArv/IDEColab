@@ -1,5 +1,5 @@
 import { useCallback, useRef, useEffect } from 'react';
-import { useEditorStore } from '../../shared/store';
+import { useEditorStore } from '../store';
 import type { INPMetricData, LongTaskEntry } from '../../shared/types';
 import { trackINP } from '../../infrastructure/metrics/inp-tracker';
 import { trackLongTasks } from '../../infrastructure/metrics/long-task-observer';

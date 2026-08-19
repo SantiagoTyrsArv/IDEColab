@@ -1,5 +1,5 @@
 import { useCallback, useRef, useEffect } from 'react';
-import { useEditorStore } from '../../shared/store';
+import { useEditorStore } from '../store';
 import { countWords } from '../../domain/use-cases/count-words';
 import { detectMisspelled } from '../../domain/use-cases/detect-misspelled';
 import { updateMetricsWithINP, updateMetricsWithLongTask } from '../../domain/entities/metrics';
